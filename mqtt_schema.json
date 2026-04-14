@@ -1,0 +1,5 @@
+{
+  "truck_id": "string",
+  "doca_id": "string",
+  "timestamp": "iso8601_datetime"
+}
