@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+BROKER = os.getenv("MQTT_BROKER")
+PORT = int(os.getenv("MQTT_PORT", 8883))
+USER = os.getenv("MQTT_USERNAME")
+PASS = os.getenv("MQTT_PASSWORD")
+
 API_URL = "http://localhost:8000"
 MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
@@ -35,11 +40,20 @@ def simulate_mqtt_scan(truck_id, doca_id):
     topic = f"{MQTT_TOPIC_PREFIX}{doca_id}/scan"
     payload = json.dumps({"truck_id": truck_id})
     
-    client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    client.username_pw_set(os.getenv("MQTT_USERNAME"), os.getenv("MQTT_PASSWORD"))
+    client.tls_set()
+    
     try:
-        client.connect(MQTT_BROKER, MQTT_PORT)
-        client.publish(topic, payload)
-        print(f"Mensagem publicada no tópico `{topic}`: {payload}")
+        client.connect(os.getenv("MQTT_BROKER"), 8883)
+        
+        # O SEGREDO ESTÁ AQUI:
+        client.loop_start() # Inicia o processamento em segundo plano
+        info = client.publish(topic, payload, qos=1)
+        info.wait_for_publish() # ESPERA a mensagem ser entregue de fato
+        
+        print(f"Mensagem publicada com sucesso no tópico `{topic}`")
+        client.loop_stop()
         client.disconnect()
     except Exception as e:
         print(f"Falha ao publicar no MQTT: {e}")
