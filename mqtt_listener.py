@@ -9,11 +9,6 @@ from database import SessionLocal, SGILog, Truck
 
 load_dotenv()
 
-BROKER = os.getenv("MQTT_BROKER")
-PORT = int(os.getenv("MQTT_PORT", 8883))
-USER = os.getenv("MQTT_USERNAME")
-PASS = os.getenv("MQTT_PASSWORD")
-
 # Logging Configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -94,9 +89,7 @@ def run():
     client.on_message = process_message
 
     try:
-        client.username_pw_set(os.getenv("MQTT_USERNAME"), os.getenv("MQTT_PASSWORD"))
-        client.tls_set()  # Ativa a criptografia obrigatória para o HiveMQ Cloud (Porta 8883)
-        client.connect(os.getenv("MQTT_BROKER"), int(os.getenv("MQTT_PORT", 8883)))
+        client.connect(BROKER, PORT)
         client.loop_forever()
     except Exception as e:
         logger.critical(f"MQTT Listener could not start: {e}")
